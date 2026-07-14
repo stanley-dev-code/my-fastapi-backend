@@ -1,0 +1,16 @@
+# Virtual environment
+fastenv/
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE files
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
