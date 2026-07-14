@@ -47,3 +47,9 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str        
+
+

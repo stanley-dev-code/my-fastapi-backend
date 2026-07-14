@@ -11,6 +11,7 @@ from app.schemas.user_schema import (
     UserUpdate,
     AdminCreateUser,
     UserRoleUpdate,
+    ChangePassword,
 )
 from app.services import user_service
 from app.utils.dependencies import (
@@ -65,6 +66,23 @@ async def update_my_profile(
     )
 
     return user
+
+@router.patch("/change-password")
+def change_password(
+    data: ChangePassword,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user_service.change_password(
+        db=db,
+        user=current_user,
+        old_password=data.old_password,
+        new_password=data.new_password,
+    )
+
+    return {
+        "message": "Password changed successfully"
+    }
 
 
 @router.delete("/me")

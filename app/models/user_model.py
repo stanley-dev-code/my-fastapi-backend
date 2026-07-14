@@ -1,17 +1,8 @@
 import uuid
 import enum
-from datetime import datetime, date
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import (
-    String,
-    Boolean,
-    Date,
-    DateTime,
-    Enum,
-    Text,
-    ForeignKey,
-    func,
-)    
+from sqlalchemy import String, Boolean, DateTime, Enum, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,11 +15,9 @@ class UserRole(str, enum.Enum):
     SUPER_ADMIN = "super_admin"
 
 
-
 class User(Base):
     __tablename__ = "users"
 
-    # User ID (UUID)
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -36,11 +25,7 @@ class User(Base):
         index=True,
     )
 
-    # Personal Information
-    full_name: Mapped[str] = mapped_column(
-        String(150),
-        nullable=False,
-    )
+    full_name: Mapped[str] = mapped_column(String(150), nullable=False)
 
     email: Mapped[str] = mapped_column(
         String(150),
@@ -49,72 +34,24 @@ class User(Base):
         nullable=False,
     )
 
-    password: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    profile_photo_url: Mapped[str | None] = mapped_column(
-        String(500),
-        nullable=True,
-    )
-
-    bio: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    date_of_birth: Mapped[date | None] = mapped_column(
-        Date,
-        nullable=True,
-    )
-
-    gender: Mapped[str | None] = mapped_column(
-        String(20),
-        nullable=True,
-    )
-
-    nationality: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
-
-    phone_number: Mapped[str | None] = mapped_column(
-        String(20),
-        unique=True,
-        nullable=True,
-    )
-
-    address: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    # Authorization
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole),
         default=UserRole.USER,
         nullable=False,
     )
 
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-    )
-    reset_otp: Mapped[str | None] = mapped_column(
-    String(10),
-    nullable=True,
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    reset_otp_expires_at: Mapped[DateTime | None] = mapped_column(
-    DateTime,
-    nullable=True,
-    )
-
-    # Timestamp
     created_at: Mapped[DateTime] = mapped_column(
         DateTime,
         server_default=func.now(),
+    )
+
+    reset_otps: Mapped[list["PasswordResetOTP"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
 

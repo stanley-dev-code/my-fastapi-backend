@@ -1,8 +1,14 @@
 import uuid
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User, UserRole, PasswordResetOTP
-from app.schemas.user_schema import UserCreate, UserUpdate, AdminCreateUser
+from app.schemas.user_schema import (
+    UserCreate,
+    UserUpdate,
+    AdminCreateUser,
+    ChangePassword,
+)
 from app.core.security import hash_password, verify_password
 from app.core.config import settings
 
@@ -137,5 +143,25 @@ def delete_user(db: Session, user_id: uuid.UUID):
 
     db.delete(user)
     db.commit()
+
+    return user
+
+
+def change_password(
+    db: Session,
+    user: User,
+    old_password: str,
+    new_password: str,
+):
+    if not verify_password(old_password, user.password):
+        raise HTTPException(
+            status_code=400,
+            detail="Old password is incorrect",
+        )
+
+    user.password = hash_password(new_password)
+
+    db.commit()
+    db.refresh(user)
 
     return user
