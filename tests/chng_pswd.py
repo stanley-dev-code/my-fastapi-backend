@@ -8,8 +8,8 @@ headers = {
 }
 
 data = {
-  "old_password": "Password123!",
-  "new_password": "Newpassword123"
+  "old_password": "Newpassword123",
+  "new_password": "Password123"
 }
 
 

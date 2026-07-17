@@ -1,4 +1,6 @@
 import uuid
+import os
+import shutil
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Form, File, UploadFile
@@ -48,6 +50,22 @@ async def update_my_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Default value if no image is uploaded
+    profile_photo_url = None
+
+    # Save uploaded image
+    if profile_photo:
+        os.makedirs("uploads", exist_ok=True)
+
+        filename = f"{uuid.uuid4()}_{profile_photo.filename}"
+        file_path = os.path.join("uploads", filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(profile_photo.file, buffer)
+
+        profile_photo_url = file_path
+
+    # Create the update data
     data = UserUpdate(
         full_name=full_name,
         email=email,
@@ -57,6 +75,7 @@ async def update_my_profile(
         nationality=nationality,
         phone_number=phone_number,
         address=address,
+        profile_photo_url=profile_photo_url,
     )
 
     user = user_service.update_user(
@@ -129,14 +148,14 @@ def admin_create_user(
 @router.patch("/{user_id}/role", response_model=UserResponse)
 def update_role(
     user_id: uuid.UUID,
-    data: UserRoleUpdate,
+    role: UserRole = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     user = user_service.update_user_role(
         db=db,
         user_id=user_id,
-        role=data.role,
+        role=role,
     )
 
     if not user:
@@ -146,7 +165,6 @@ def update_role(
         )
 
     return user
-
 
 @router.delete("/{user_id}")
 def admin_delete_user(
