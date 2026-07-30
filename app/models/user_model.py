@@ -55,6 +55,33 @@ class User(Base):
     )
 
 
+    # --- logistics-module back references -------------------------------
+    # a user can be the creator of many shipments
+    created_shipments: Mapped[list["Shipment"]] = relationship(
+        back_populates="creator",
+        foreign_keys="Shipment.created_by",
+    )
+
+    # a user can record many route-history entries
+    recorded_routes: Mapped[list["ShipmentRoute"]] = relationship(
+        back_populates="recorder",
+        foreign_keys="ShipmentRoute.recorded_by",
+    )
+
+    # a user can log many status-history entries
+    status_changes: Mapped[list["ShipmentStatusHistory"]] = relationship(
+        back_populates="changer",
+        foreign_keys="ShipmentStatusHistory.changed_by",
+    )
+
+    # a user can upload many shipment documents
+    uploaded_documents: Mapped[list["ShipmentDocument"]] = relationship(
+        back_populates="uploader",
+        foreign_keys="ShipmentDocument.uploaded_by",
+    )
+
+
+
 class PasswordResetOTP(Base):
     __tablename__ = "password_reset_otps"
 
