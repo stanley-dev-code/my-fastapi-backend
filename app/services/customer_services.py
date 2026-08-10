@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.logistics_model import Customer
-from app.schemas.customer_schema import CustomerCreate, CustomerUpdate
+from app.schemas.logistics_schema import CustomerCreate, CustomerUpdate
 
 
 def create_customer(

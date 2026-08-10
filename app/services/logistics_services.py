@@ -10,7 +10,7 @@ from app.schemas.logistics_schema import (
     LogisticsCompanyUpdate,
 )
 
-from app.schemas.customer_schema import (
+from app.schemas.logistics_schema import (
     CustomerCreate,
     CustomerUpdate,
 )

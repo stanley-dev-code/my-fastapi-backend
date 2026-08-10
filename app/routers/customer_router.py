@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database.db import get_db
 from app.models.user_model import User
-from app.schemas.customer_schema import (
+from app.schemas.logistics_schema import (
     CustomerCreate,
     CustomerUpdate,
     CustomerResponse,

@@ -1,8 +1,8 @@
 import uuid
 import enum
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, date
 
-from sqlalchemy import String, Boolean, DateTime, Enum, ForeignKey, func
+from sqlalchemy import String, Boolean, DateTime, Date, Enum, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -43,6 +43,15 @@ class User(Base):
     )
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # --- profile fields ---------------------------------------------------
+    profile_photo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    bio: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    nationality: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column(
         DateTime,

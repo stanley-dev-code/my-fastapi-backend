@@ -1,15 +1,19 @@
 import uuid
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+import re
 
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.models.logistics_model import (
     ShipmentStatus,
     ContainerStatus,
     ContainerType,
+    ContainerSize,
     LocationType,
     DocumentType,
     DriverStatus,
 )
+
+CONTAINER_NUMBER_PATTERN = re.compile(r"^[A-Z]{4}\d{7}$")
 
 
 # ---------------------------------------------------------------------------
@@ -121,12 +125,24 @@ class ContainerCreate(BaseModel):
     container_number: str
     shipping_line: str
     container_type: ContainerType = ContainerType.DRY
+    container_size: ContainerSize = ContainerSize.TWENTY_FT
     capacity_kg: int | None = None
+
+    @field_validator("container_number")
+    @classmethod
+    def validate_container_number(cls, value: str) -> str:
+        value = value.strip().upper()
+        if not CONTAINER_NUMBER_PATTERN.match(value):
+            raise ValueError(
+                "Container number must be 4 uppercase letters followed by 7 digits (e.g. MSCU1234567)."
+            )
+        return value
 
 
 class ContainerUpdate(BaseModel):
     shipping_line: str | None = None
     container_type: ContainerType | None = None
+    container_size: ContainerSize | None = None
     capacity_kg: int | None = None
     status: ContainerStatus | None = None
 
@@ -139,9 +155,16 @@ class ContainerResponse(BaseModel):
     container_number: str
     shipping_line: str
     container_type: ContainerType
+    container_size: ContainerSize
     capacity_kg: int | None
     status: ContainerStatus
     created_at: datetime
+
+class ContainerListResponse(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    items: list[ContainerResponse]
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +287,12 @@ class ShipmentDetailResponse(ShipmentResponse):
     status_history: list[ShipmentStatusHistoryResponse] = Field(default_factory=list)
     documents: list[ShipmentDocumentResponse] = Field(default_factory=list)
 
+class ShipmentListResponse(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    items: list[ShipmentResponse]
+
 
 # ---------------------------------------------------------------------------
 # PUBLIC TRACKING (never exposes cargo_description, internal_notes, customer info)
@@ -271,7 +300,7 @@ class ShipmentDetailResponse(ShipmentResponse):
 
 class PublicTrackingRequest(BaseModel):
     container_number: str
-    shipping_line: str
+    shipping_line: str | None = None
 
 
 class PublicRouteEntry(BaseModel):

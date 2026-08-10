@@ -49,6 +49,12 @@ class ContainerType(str, enum.Enum):
     FLAT_RACK = "flat_rack"
     TANK = "tank"
 
+class ContainerSize(str, enum.Enum):
+    TWENTY_FT = "20ft"
+    FORTY_FT = "40ft"
+    FORTY_FT_HC = "40ft_hc"
+    FORTY_FIVE_FT_HC = "45ft_hc"
+
 
 class LocationType(str, enum.Enum):
     PORT = "port"
@@ -71,6 +77,7 @@ class DriverStatus(str, enum.Enum):
     ACTIVE = "active"
     ON_TRIP = "on_trip"
     INACTIVE = "inactive"
+
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +122,12 @@ class Customer(Base):
     )
 
     full_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    email: Mapped[str | None] = mapped_column(String(150), index=True)
+    email: Mapped[str | None] = mapped_column(
+    String(150),
+    unique=True,
+    index=True,
+    nullable=True,
+)
     phone: Mapped[str | None] = mapped_column(String(30))
     company_name: Mapped[str | None] = mapped_column(String(150))
     address: Mapped[str | None] = mapped_column(Text)
@@ -179,11 +191,17 @@ class Container(Base):
     container_type: Mapped[ContainerType] = mapped_column(
         Enum(ContainerType), default=ContainerType.DRY, nullable=False
     )
+    container_size: Mapped[ContainerSize] = mapped_column(
+        Enum(ContainerSize), default=ContainerSize.TWENTY_FT, nullable=False
+    )
     capacity_kg: Mapped[int | None] = mapped_column(Integer)
 
     status: Mapped[ContainerStatus] = mapped_column(
         Enum(ContainerStatus), default=ContainerStatus.AVAILABLE, nullable=False
     )
+
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -196,7 +214,6 @@ class Container(Base):
     __table_args__ = (
         UniqueConstraint("container_number", "shipping_line", name="uq_container_number_shipping_line"),
     )
-
 
 # ---------------------------------------------------------------------------
 # SHIPMENT (core entity)
@@ -379,3 +396,6 @@ class ShipmentDocument(Base):
     uploader: Mapped["User | None"] = relationship(
         back_populates="uploaded_documents", foreign_keys=[uploaded_by]
     )
+
+
+    

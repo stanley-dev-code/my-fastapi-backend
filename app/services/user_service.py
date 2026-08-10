@@ -1,5 +1,6 @@
+import os
 import uuid
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User, UserRole, PasswordResetOTP
@@ -11,6 +12,12 @@ from app.schemas.user_schema import (
 )
 from app.core.security import hash_password, verify_password
 from app.core.config import settings
+from app.utils.file_storage import (
+    save_profile_image,
+    delete_profile_image,
+    rename_user_media_dir,
+)
+
 
 
 
@@ -95,6 +102,13 @@ def update_user(db: Session, user_id: uuid.UUID, data: UserUpdate):
         user.email = data.email
 
     if data.profile_photo_url is not None:
+        # Delete the old profile photo file before saving the new one
+        if user.profile_photo_url:
+            old_filename = user.profile_photo_url.split("/")[-1]
+            old_path = settings.MEDIA_ROOT / old_filename
+            if old_path.exists():
+                os.remove(old_path)
+
         user.profile_photo_url = data.profile_photo_url
 
     if data.bio is not None:
@@ -114,6 +128,15 @@ def update_user(db: Session, user_id: uuid.UUID, data: UserUpdate):
 
     if data.address is not None:
         user.address = data.address
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+def remove_profile_image(db: Session, user: User) -> User:
+    delete_profile_image(user)
+    user.profile_image = None
 
     db.commit()
     db.refresh(user)

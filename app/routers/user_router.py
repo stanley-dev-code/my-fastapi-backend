@@ -5,6 +5,7 @@ import shutil
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Form, File, UploadFile
 from sqlalchemy.orm import Session
+from datetime import date
 
 from app.database.db import get_db
 from app.models.user_model import User, UserRole
@@ -16,6 +17,7 @@ from app.schemas.user_schema import (
     ChangePassword,
 )
 from app.services import user_service
+from app.core.config import settings
 from app.utils.dependencies import (
     get_current_user,
     require_admin,
@@ -37,44 +39,36 @@ def get_my_profile(
 
 
 @router.patch("/me", response_model=UserResponse)
-async def update_my_profile(
-    full_name: str = Form(...),
-    email: str = Form(...),
-    bio: str | None = Form(None),
-    date_of_birth: str | None = Form(None),
-    gender: str | None = Form(None),
-    nationality: str | None = Form(None),
-    phone_number: str | None = Form(None),
-    address: str | None = Form(None),
-    profile_photo: UploadFile | None = File(None),
+def update_my_profile(
+    full_name: str | None = Form(None),
+    email: str | None = Form(None),
+    image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Default value if no image is uploaded
+    """
+    Multipart form-data endpoint. Send any of:
+    - full_name (text)
+    - email (text)
+    - image (file) -> saved to the user's media folder as their profile image
+    All fields are optional; only what you send gets updated.
+    """
     profile_photo_url = None
 
-    # Save uploaded image
-    if profile_photo:
-        os.makedirs("uploads", exist_ok=True)
+    if image:
+        settings.MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
-        filename = f"{uuid.uuid4()}_{profile_photo.filename}"
-        file_path = os.path.join("uploads", filename)
+        filename = f"{uuid.uuid4()}_{image.filename}"
+        file_path = settings.MEDIA_ROOT / filename
 
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(profile_photo.file, buffer)
+            shutil.copyfileobj(image.file, buffer)
 
-        profile_photo_url = file_path
+        profile_photo_url = f"{settings.MEDIA_URL}/{filename}"
 
-    # Create the update data
     data = UserUpdate(
         full_name=full_name,
         email=email,
-        bio=bio,
-        date_of_birth=date_of_birth,
-        gender=gender,
-        nationality=nationality,
-        phone_number=phone_number,
-        address=address,
         profile_photo_url=profile_photo_url,
     )
 
@@ -85,6 +79,15 @@ async def update_my_profile(
     )
 
     return user
+
+
+@router.delete("/me/profile-image", response_model=UserResponse)
+def delete_my_profile_image(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return user_service.remove_profile_image(db, current_user)
+
 
 @router.patch("/change-password")
 def change_password(
