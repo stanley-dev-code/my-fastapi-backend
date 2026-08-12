@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,6 +25,8 @@ app = FastAPI(
     description="Reusable JWT authentication, refresh token, UUID IDs and role-based permissions",
     version="1.0.0",
 )
+
+os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
 app.mount(
     settings.MEDIA_URL,
     StaticFiles(directory=str(settings.MEDIA_ROOT)),
